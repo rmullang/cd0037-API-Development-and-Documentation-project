@@ -8,31 +8,56 @@ from models import setup_db, Question, Category
 
 QUESTIONS_PER_PAGE = 10
 
+def paginate_questions(request, selection):
+    page = request.args.get("question", 1, type=int)
+    start = (page - 1) * QUESTIONS_PER_PAGE
+    end = start + QUESTIONS_PER_PAGE
+
+    questions = [question.format() for question in selection]
+    current_questions = questions[start:end]
+
+    return current_questions
+
 def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__)
     setup_db(app)
 
-    """
-    @TODO: Set up CORS. Allow '*' for origins. Delete the sample route after completing the TODOs
-    """
+    # CORS for all origins *
+    CORS(app, resources={r"/api/v1/*": {"origins": "*"}})
+   
+    # CORS Headers
+    @app.after_request
+    def after_request(response):
+        response.headers.add(
+            "Access-Control-Allow-Headers", "Content-Type,Authorization,true"
+        )
+        response.headers.add(
+            "Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS"
+        )
+        return response
+
+    # End point returns all available categories.
+
+    @app.route("/api/v1/categories")
+    def retrieve_categories():
+        categories = Category.query.all()
+
+        if len(categories) == 0:
+            abort(404)
+
+        return jsonify(
+            {
+                "success": True,
+                "categories": {category.id: category.type for category in categories},
+                "total_categories": len(categories)
+            }
+        )
 
     """
-    @TODO: Use the after_request decorator to set Access-Control-Allow
-    """
-
-    """
-    @TODO:
-    Create an endpoint to handle GET requests
-    for all available categories.
-    """
-
-
-    """
-    @TODO:
-    Create an endpoint to handle GET requests for questions,
+    Endpoint to returens  questions,
     including pagination (every 10 questions).
-    This endpoint should return a list of questions,
+    This endpoint will return a list of questions,
     number of total questions, current category, categories.
 
     TEST: At this point, when you start the application
@@ -40,14 +65,53 @@ def create_app(test_config=None):
     ten questions per page and pagination at the bottom of the screen for three pages.
     Clicking on the page numbers should update the questions.
     """
+    @app.route("/api/v1/questions")
+    def retrieve_questions():
+        selection = Question.query.order_by(Question.id).all()
+        current_questions = paginate_questions(request, selection)
+        categories = Category.query.order_by(Category.type).all()
 
-    """
-    @TODO:
-    Create an endpoint to DELETE question using a question ID.
+        if len(current_questions) == 0:
+            abort(404)
 
-    TEST: When you click the trash icon next to a question, the question will be removed.
-    This removal will persist in the database and when you refresh the page.
-    """
+        return jsonify(
+            {
+                "success": True,
+                "questions": current_questions,
+                "total_questions": len(Question.query.all()),
+                "categories": {category.id: category.type for category in categories},
+                "current_category": None
+            }
+        )
+
+
+    #Endpoint to DELETE question using a question ID.
+
+    @app.route("/api/v1/questions/<int:question_id>", methods=["DELETE"])
+    def delete_question(question_id):
+        try:
+            question = Question.query.filter(Question.id == question_id).one_or_none()
+
+            if question is None:
+                abort(404)
+
+            question.delete()
+            selection = Question.query.order_by(Question.id).all()
+            current_questions = paginate_questions(request, selection)
+
+            return jsonify(
+                {
+                    "success": True,
+                    "deleted": question_id,
+                    "questions": current_questions,
+                    "total_questions": len(Question.query.all()),
+                }
+            )
+
+        except:
+            abort(422)
+
+
 
     """
     @TODO:
@@ -59,6 +123,31 @@ def create_app(test_config=None):
     the form will clear and the question will appear at the end of the last page
     of the questions list in the "List" tab.
     """
+    @app.route("/api/v1/questions", methods=['POST'])
+    def new_question():
+        requestBody = request.get_json()
+
+        if not ('question' in requestBody and 'answer' in requestBody and 'difficulty' in requestBody and 'category' in requestBody):
+            abort(422)
+
+        question = requestBody.get('question')
+        answer = requestBody.get('answer')
+        difficulty = requestBody.get('difficulty')
+        category = requestBody.get('category')
+
+        try:
+            question = Question(question=question, answer=answer,
+                                difficulty=difficulty, category=category)
+            question.insert()
+
+            return jsonify({
+                'success': True,
+                'created': question.id,
+            })
+
+        except:
+            abort(422)
+
 
     """
     @TODO:
