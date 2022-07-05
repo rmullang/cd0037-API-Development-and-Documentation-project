@@ -146,9 +146,9 @@ def create_app(test_config=None):
 
     @app.route('/api/v1/questions/search', methods=['POST'])
     def searchfor_questions():
-        # retrive user inputs
-        body = request.get_json()
-        searchTerm = body.get('searchTerm', None)
+       
+        requestBody = request.get_json()
+        searchTerm = requestBody.get('searchTerm', None)
         try:
             if searchTerm:
                 selection = Question.query.filter(Question.question.ilike
@@ -170,14 +170,11 @@ def create_app(test_config=None):
 
     @app.route('/api/v1/categories/<int:id>/questions')
     def get_category_questions(id):
-        # get category matching the ID
         category = Category.query.filter_by(id=id).one_or_none()
 
         try:
-            # retrive questions matching the category
             selection = Question.query.filter_by(category=category.id).all()
 
-            # paginate selected questions and return results
             results = paginate_questions(request, selection)
 
             return jsonify({
@@ -201,17 +198,14 @@ def create_app(test_config=None):
             category = body.get('quiz_category')
             previousQuestions = body.get('previous_questions')
 
-            # If 'ALL' categories is 'clicked', filter available Qs
             if category['type'] == 'click':
                 availableQuestions = Question.query.filter(
                     Question.id.notin_((previousQuestions))).all()
-            # Filter available questions by chosen category & unused questions
             else:
                 availableQuestions = Question.query.filter_by(
                     category=category['id']).filter(
                         Question.id.notin_((previousQuestions))).all()
 
-            # randomly select next question from available questions
             new_question = availableQuestions[random.randrange(
                 0, len(availableQuestions))].format() if len(
                     availableQuestions) > 0 else None
