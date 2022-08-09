@@ -9,7 +9,7 @@ from models import setup_db, Question, Category
 QUESTIONS_PER_PAGE = 10
 
 def paginate_questions(request, selection):
-    page = request.args.get("question", 1, type=int)
+    page = request.args.get("page", 1, type=int)
     start = (page - 1) * QUESTIONS_PER_PAGE
     end = start + QUESTIONS_PER_PAGE
 
@@ -25,17 +25,21 @@ def create_app(test_config=None):
     
     # CORS for all origins *
     #CORS(app, resources={r"/*": {"origins": "*"}})
-    CORS(app, support_credentials=True)
-    app.config['CORS_HEADERS'] = 'Content-Type'
+    #CORS(app, support_credentials=True)
+    CORS(app)
+    #app.config['CORS_HEADERS'] = 'Content-Type'
    
     # CORS Headers
     @app.after_request
     def after_request(response):
         response.headers.add(
-            "Access-Control-Allow-Headers", "Content-Type,Authorization,true,Referer,Accept"
+          'Access-Control-Allow-Headers', 'Content-Type, Authorization, true'
         )
         response.headers.add(
-            "Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS"
+          'Access-Control-Allow-Methods', 'GET,PUT,POST, DELETE, OPTIONS'
+        )
+        response.headers.add(
+          'Access-Control-Allow-Origin', '*'
         )
         return response
 
@@ -146,7 +150,7 @@ def create_app(test_config=None):
 
     @app.route('/api/v1/questions/search', methods=['POST'])
     def searchfor_questions():
-       
+        
         requestBody = request.get_json()
         searchTerm = requestBody.get('searchTerm', None)
         try:
@@ -154,7 +158,7 @@ def create_app(test_config=None):
                 selection = Question.query.filter(Question.question.ilike
                                                   (f'%{searchTerm}%')).all()
 
-            
+           
             results = paginate_questions(request, selection)
 
             return jsonify({
