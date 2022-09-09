@@ -123,25 +123,21 @@ def create_app(test_config=None):
     @app.route("/api/v1/questions", methods=['POST'])
     @cross_origin(origin='*')
     def add_question():
-        requestBody = request.get_json()
-
-        if not ('question' in requestBody and 'answer' in requestBody and 'difficulty' in requestBody and 'category' in requestBody):
-            abort(422)
-
-        newQuestion = requestBody.get('question')
-        newAnswer = requestBody.get('answer')
-        newDifficulty = requestBody.get('difficulty')
-        newCategory = requestBody.get('category')
 
         try:
-            question = Question(question=newQuestion, answer=newAnswer,
-                                difficulty=newDifficulty, category=newCategory)
-            question.insert()
 
-            return jsonify({
-                'success': True,
-                'created': question.id,
-            })
+            requestBody = request.get_json()
+
+            if not ('question' in requestBody and 'answer' in requestBody and 'difficulty' in requestBody and 'category' in requestBody):
+                abort(422)
+
+            question = Question(question=requestBody.get('question'), answer=requestBody.get('answer'), difficulty=requestBody.get('difficulty'),  category=requestBody.get('category'))
+            
+            #insertquestion to database
+            question.insert()
+            
+            #return sucesswith question.id
+            return jsonify({ 'success': True})
 
         except:
             abort(422)
@@ -198,30 +194,44 @@ def create_app(test_config=None):
     def get_quiz():
         try:
             body = request.get_json()
-
+            # get category information form request
             category = body.get('quiz_category')
+            # get previous questions from request 
             previousQuestions = body.get('previous_questions')
-
-            if category['type'] == 'click':
-                availableQuestions = Question.query.filter(
-                    Question.id.notin_((previousQuestions))).all()
+            
+            #if not category is selected then filter on preivous questions
+            #if category selected then filter on both category and previousquestions
+            if category['id'] == 0:
+                availableQuestions = Question.query.filter(Question.id.notin_(previousQuestions)).all()
+                
             else:
-                availableQuestions = Question.query.filter_by(
-                    category=category['id']).filter(
-                        Question.id.notin_((previousQuestions))).all()
+                availableQuestions = Question.query.filter(Question.id.notin_(previousQuestions) and Question.category.in_(category['id'])).all()
+            
+            print(availableQuestions)
 
-            new_question = availableQuestions[random.randrange(
-                0, len(availableQuestions))].format() if len(
-                    availableQuestions) > 0 else None
+            randomQuestionNumber = random.randint(0, len(availableQuestions)-1)
+            
+            print(randomQuestionNumber)
 
+            newQuestion = availableQuestions[randomQuestionNumber]
+ 
             return jsonify({
                 'success': True,
-                'question': new_question
+                'question': newQuestion.format()
             })
-        except:
+        except Exception as e:
+            print(e)
             abort(422)
 
+    @app.route('/api/v1/quizzes', methods=['POST'])
+    def get_quiz1():
+        try: 
+            body = request.get_json()
+            requestCategory = body.get('quiz_category')
+            previousQuestions = body.get('previous_questions')
 
+        except:
+            abort(422)
     # Error Handlers
       
 

@@ -61,7 +61,6 @@ class TriviaTestCase(unittest.TestCase):
         data = json.loads(res.data)
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
-        self.assertTrue(data['created'])
     # test search for question
     def test_searchfor_questions(self):
  
