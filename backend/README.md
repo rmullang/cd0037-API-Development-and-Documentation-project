@@ -36,6 +36,15 @@ Populate the database using the `trivia.psql` file provided. From the `backend` 
 psql trivia < trivia.psql
 ```
 
+
+### Set databbase credentials as global variables
+
+```bash
+export DB_HOST=<DATABASE_HOST>
+export DB_NAME=<DB_NAME>
+```
+
+
 ### Run the Server
 
 From within the `./src` directory first ensure you are working using your created virtual environment.
