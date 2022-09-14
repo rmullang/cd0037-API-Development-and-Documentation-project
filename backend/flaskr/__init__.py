@@ -206,16 +206,22 @@ def create_app(test_config=None):
                 availableQuestions = Question.query.filter(
                     Question.id.notin_(previousQuestions)).filter_by(
                     category=category['id']).all()
+            
+            if len(availableQuestions) <= 0:
+                return jsonify({
+                    'success': True,
+                    'question': None
+                })
+            else:
+                randomQuestionNumber = random.randint(
+                    0, len(availableQuestions) - 1)
 
-            randomQuestionNumber = random.randint(
-                0, len(availableQuestions) - 1)
+                newQuestion = availableQuestions[randomQuestionNumber]
 
-            newQuestion = availableQuestions[randomQuestionNumber]
-
-            return jsonify({
-                'success': True,
-                'question': newQuestion.format()
-            })
+                return jsonify({
+                    'success': True,
+                    'question': newQuestion.format()
+                })
         except Exception as e:
             print(e)
             abort(422)

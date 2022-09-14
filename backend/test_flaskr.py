@@ -38,6 +38,15 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
         self.assertTrue(data['categories'])
+     
+    # try to get catetory not existings
+    def test_404retrieve_categories(self):
+
+        res = self.client().get('/api/v1/categories/999999999')
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 404)
+
+
     # test retrieve_questions
 
     def test_retrieve_questions(self):
@@ -49,6 +58,14 @@ class TriviaTestCase(unittest.TestCase):
         self.assertTrue(data['questions'])
         self.assertTrue(len(data['questions']))
         self.assertTrue(data['total_questions'])
+
+    def test_404retrieve_questions(self):
+
+        res = self.client().get('/api/v1/questions?page=9999999999')
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 404)
+
+            
     # test_delete_questions
 
     def test_delete_question(self):
@@ -116,6 +133,15 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['success'], True)
         self.assertTrue(data['questions'])
 
+    def test_404searchfor_questions(self):
+
+        res = self.client().post(
+            "/api/v1/questions/search",
+            json={})
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 404)
+
+
     def test_get_category_questions(self):
 
         res = self.client().get("/api/v1/categories/1/questions")
@@ -146,6 +172,18 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
         self.assertTrue(data['question'])
+
+   
+    def test_422get_quiz(self):
+
+        res = self.client().post(
+            "/api/v1/quizzes",
+            json={
+                "quiz_category": {
+                    "id": 1,
+                    "type": "Science"}})
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 422)
 
 
 # Make the tests conveniently executable
