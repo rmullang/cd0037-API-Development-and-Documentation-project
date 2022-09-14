@@ -67,7 +67,18 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
         self.assertTrue(data['deleted'])
+    
+    # test 404 for delete question
+    def test_404delete_question(self):
 
+        #set id as string so it will not be found
+        id="abcd"
+        res = self.client().delete("/api/v1/questions/" + id)
+        data = json.loads(res.data)
+        print(res.status_code)
+        self.assertEqual(res.status_code, 404)
+
+    
     # test add question
     def test_add_question(self):
 
@@ -81,8 +92,19 @@ class TriviaTestCase(unittest.TestCase):
         data = json.loads(res.data)
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
-    # test search for question
 
+    def test_422add_question(self):
+
+        res = self.client().post(
+            "/api/v1/questions",
+            json={
+                "question": "test",
+                "difficulty": 1,
+                "category": 1})
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 422)
+
+    # test search for question
     def test_searchfor_questions(self):
 
         res = self.client().post(
@@ -101,6 +123,12 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
         self.assertTrue(data['questions'])
+    
+    def test_get_404category_questions(self):
+
+        res = self.client().get("/api/v1/categories/somecategory/questions")
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 404)
 
     def test_get_quiz(self):
 
